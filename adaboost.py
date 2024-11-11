@@ -26,6 +26,31 @@ class DecisionStump:
 
         return predictions
     
+class DecisionStump:
+    def __init__(self):
+        # the direction of classification for each sample
+        self.polarity = 1
+        # id of a column
+        self.feature_idx = None
+        # determines whether the value should be 1 or -1
+        self.threshold = None
+        # weight of the classifier
+        self.alpha = None
+
+    def predict(self, X):
+        n_samples = X.shape[0]
+        X_column = X[:, self.feature_idx]
+        predictions = np.ones(n_samples)
+
+        # determining the value of a prediction
+        if self.polarity == 1:
+            predictions[X_column < self.threshold] = -1
+        else:
+            predictions[X_column >= self.threshold] = -1
+
+        return predictions
+
+
 class AdaBoost:
     def __init__(self, n_classifiers=5):
         # initialize the classification with a specific num of learners
@@ -33,6 +58,7 @@ class AdaBoost:
         self.clfs = []
         self.errors = []  # initialize errors list
         self.misclassified_indices = []  # initialize misclassified indices list
+        self.initial_errors = []  # track initial error rates before boosting
 
 
     def fit(self, X, y):
@@ -46,6 +72,7 @@ class AdaBoost:
         for _ in range(self.n_classifiers):
             clf = DecisionStump()
             min_error = float('inf')
+            initial_error = float('inf')
 
             # for each column in the data set calculate the thresholds
             for feature_i in range(n_features):
@@ -61,6 +88,10 @@ class AdaBoost:
 
                     misclassified = weights[y != predictions]
                     error = sum(misclassified)
+
+                    # store initial error before boosting adjustment
+                    if error < initial_error:
+                        initial_error = error
 
                     if error > 0.5:
                         error = 1 - error
@@ -84,6 +115,7 @@ class AdaBoost:
 
             # track the error rate
             self.errors.append(min_error)
+            self.initial_errors.append(initial_error)
 
             # track misclassified points
             misclassified_points = np.where(predictions != y)[0] #[0] returns first element of the tuple
@@ -96,8 +128,8 @@ class AdaBoost:
 
     #create plotting function
     def plot_results(self, X, y):
-      n_iterations = len(self.misclassified_indices) #number of boosting iterations
-      fig, axes = plt.subplots(1, n_iterations + 1, figsize=(19, 5))  # create 1 row and n_iterations+1 columns
+      n_iterations = len(self.misclassified_indices)  # number of boosting iterations
+      fig, axes = plt.subplots(1, n_iterations + 3, figsize=(25, 5))  # create 1 row and n_iterations + 2 columns
 
       # plot Misclassified Points for each iteration
       for i, misclassified_points in enumerate(self.misclassified_indices):
@@ -118,12 +150,26 @@ class AdaBoost:
           axes[i].set_title(f"Iteration {i+1}")
           axes[i].legend()
 
-      # plot Error Rate on the last subplot
-      axes[-1].plot(range(1, len(self.errors) + 1), self.errors, marker='o', color='r')
+
+      # plot initial error rates before boosting adjustment
+      axes[-3].plot(range(1, len(self.initial_errors) + 1), self.initial_errors, marker='o', color='orange')
+      axes[-3].set_xlabel("Iteration")
+      axes[-3].set_ylabel("Initial Error Rate")
+      axes[-3].set_title("Initial Error Rate per Iteration")
+
+      # plot Error Rate on the second-to-last subplot
+      axes[-2].plot(range(1, len(self.errors) + 1), self.errors, marker='o', color='r')
+      axes[-2].set_xlabel("Iteration")
+      axes[-2].set_ylabel("Error Rate")
+      axes[-2].set_title("Error Rate per Iteration")
+
+      # plot Alpha Values on the last subplot
+      alpha_values = [clf.alpha for clf in self.clfs]
+      axes[-1].plot(range(1, len(alpha_values) + 1), alpha_values, marker='o', color='green')
       axes[-1].set_xlabel("Iteration")
-      axes[-1].set_ylabel("Error Rate")
-      axes[-1].set_title("Error Rate per Iteration")
+      axes[-1].set_ylabel("Alpha Value")
+      axes[-1].set_title("Alpha Values per Iteration")
 
       # adjust layout and add spacing between subplots
-      plt.subplots_adjust(wspace=0.4)
+      plt.subplots_adjust(wspace=0.5)
       plt.show()
