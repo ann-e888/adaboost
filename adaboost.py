@@ -51,7 +51,7 @@ class AdaBoost:
             # for each column in the data set calculate the thresholds
             for feature_i in range(n_features):
                 X_column = X[:, feature_i]
-                thresholds = np.unique(X_column)
+                thresholds = (np.unique(X_column)[:-1] + np.unique(X_column)[1:]) / 2
                 p = 1
 
                 # calculate the number of miscalculated predctions
