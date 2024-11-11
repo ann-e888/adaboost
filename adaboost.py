@@ -33,7 +33,7 @@ class AdaBoost:
         self.clfs = []
         self.errors = []  # initialize errors list
         self.misclassified_indices = []  # initialize misclassified indices list
-
+        self.initial_errors = []
 
     def fit(self, X, y):
         # initialize number of rows, and columns
@@ -46,13 +46,13 @@ class AdaBoost:
         for _ in range(self.n_classifiers):
             clf = DecisionStump()
             min_error = float('inf')
+            initial_error = float('inf')
 
             # for each column in the data set calculate the thresholds
             for feature_i in range(n_features):
                 X_column = X[:, feature_i]
                 thresholds = np.unique(X_column)
                 p = 1
-
 
                 # calculate the number of miscalculated predctions
                 for threshold in thresholds:
@@ -61,6 +61,10 @@ class AdaBoost:
 
                     misclassified = weights[y != predictions]
                     error = sum(misclassified)
+
+                    # Store initial error before boosting adjustment
+                    if error < initial_error:
+                        initial_error = error
 
                     if error > 0.5:
                         error = 1 - error
@@ -84,9 +88,10 @@ class AdaBoost:
 
             # track the error rate
             self.errors.append(min_error)
+            self.initial_errors.append(initial_error)
 
             # track misclassified points
-            misclassified_points = np.where(predictions != y)[0] #[0] returns first element of the tuple
+            misclassified_points = np.where(predictions != y)[0] # return the first element of the tuple
             self.misclassified_indices.append(misclassified_points)
 
 
