@@ -169,5 +169,5 @@ class AdaBoost:
       axes[-1].set_title("Alpha Values per Iteration")
 
       # adjust layout and add spacing between subplots
-      plt.subplots_adjust(wspace=0.5)
+      plt.subplots_adjust(wspace=0.4)
       plt.show()
