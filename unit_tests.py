@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.datasets import load_breast_cancer, load_digits
+from sklearn.datasets import load_breast_cancer, load_digits, load_wine
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
@@ -107,6 +107,20 @@ class TestAdaBoost(TestCase):
     def test_digits(self):
         X, y = load_digits(return_X_y=True)
         y = np.where(y < 5, -1, 1)
+        
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        
+        clf = AdaBoost(n_classifiers=10)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        
+        self.assertGreater(accuracy, 0.8, "AdaBoost accuracy on Digits dataset should be above 80%")
+
+
+    def test_wine(self):
+        X, y = load_wine(return_X_y=True)
+        y = np.where(y < 1, -1, 1)
         
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
         
